@@ -5,9 +5,9 @@
 __global__
 void add(int n, float *x, float *y)
 {
-  int index = threadIdx.x;
-  int stride = blockDim.x;
-  for (int i = index; i < n; i+= stride)
+  int index = blockIdx.x * blockDim.x + threadIdx.x;
+  int stride = blockDim.x * gridDim.x;
+  for (int i = index; i < n; i += stride)
       y[i] = x[i] + y[i];
 }
 
@@ -26,7 +26,10 @@ int main(void)
   }
 
   // Run kernel on 1M elements on the CPU
-  add<<<1, 256>>>(N, x, y);
+  int blockSize = 256;
+  int numBlocks = (N + blockSize - 1) / blockSize;
+  std::cout << "# THREAD BLOCKS: " << numBlocks << std::endl;
+  add<<<numBlocks, blockSize>>>(N, x, y);
 
 
   // Check for errors (all values should be 3.0f)
